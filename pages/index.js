@@ -1,7 +1,76 @@
 import { useState, useRef, useEffect } from "react";
-import { SendHorizontal, LoaderCircle, Trash2, Key } from "lucide-react";
+import { SendHorizontal, LoaderCircle, Trash2, Key, Sparkles } from "lucide-react";
 import Head from "next/head";
 import { GoogleGenerativeAI } from "@google/generative-ai";
+
+const presetPrompts = [
+  {
+    category: "🐾 Animals",
+    prompts: [
+      "🐼 Draw a friendly panda eating bamboo in a magical forest",
+      "🐬 Create a playful dolphin jumping through rainbow waves",
+      "🐘 Draw a baby elephant playing with butterflies 🦋",
+    ]
+  },
+  {
+    category: "🗺️ Adventure",
+    prompts: [
+      "🏴‍☠️ Draw a treasure map of a magical island with dragons",
+      "🚀 Create a spaceship flying through colorful planets ✨",
+      "🧜‍♀️ Draw an underwater city with mermaids and sea creatures 🐠",
+    ]
+  },
+  {
+    category: "🌟 Fantasy",
+    prompts: [
+      "🧚‍♀️ Draw a fairy garden with glowing flowers ✨",
+      "🐲 Create a friendly dragon teaching baby dragons to fly 🔥",
+      "🏰 Draw a magical treehouse with rainbow slides 🌈",
+    ]
+  },
+  {
+    category: "🌿 Nature",
+    prompts: [
+      "🌸 Draw a garden full of giant flowers and tiny creatures 🐞",
+      "🦜 Create a rainforest with colorful birds and waterfalls 🌊",
+      "🌅 Draw a peaceful meadow with dancing fireflies ✨",
+    ]
+  }
+];
+
+const PresetPromptButton = ({ prompt, onClick }) => (
+  <button
+    onClick={() => onClick(prompt)}
+    className="p-3 text-base bg-white border-2 border-purple-200 rounded-lg hover:bg-purple-50 hover:border-purple-300 transition-all duration-200 text-left hover:scale-102 hover:shadow-md"
+  >
+    {prompt}
+  </button>
+);
+
+const PresetPromptsSection = ({ onSelectPrompt }) => (
+  <div className="mb-6 space-y-4">
+    <div className="flex items-center gap-2 mb-3">
+      <span className="text-2xl">✨</span>
+      <h2 className="text-lg font-semibold text-purple-700">Drawing Ideas</h2>
+    </div>
+    <div className="space-y-6">
+      {presetPrompts.map((category) => (
+        <div key={category.category} className="space-y-2">
+          <h3 className="text-lg font-medium text-gray-700">{category.category}</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            {category.prompts.map((prompt) => (
+              <PresetPromptButton
+                key={prompt}
+                prompt={prompt}
+                onClick={onSelectPrompt}
+              />
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+);
 
 export default function Home() {
   const canvasRef = useRef(null);
@@ -292,6 +361,11 @@ export default function Home() {
     setShowApiKeyModal(true);
   };
 
+  // Handle preset prompt selection
+  const handleSelectPrompt = (selectedPrompt) => {
+    setPrompt(selectedPrompt);
+  };
+
   return (
   <>
   <Head>
@@ -405,6 +479,9 @@ export default function Home() {
             </button>
           </menu>
         </div>
+        
+        {/* Preset Prompts Section */}
+        <PresetPromptsSection onSelectPrompt={handleSelectPrompt} />
         
         {/* Canvas section with notebook paper background */}
         <div className="w-full mb-6">
