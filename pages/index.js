@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { SendHorizontal, LoaderCircle, Trash2, Key } from "lucide-react";
 import Head from "next/head";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
 export default function Home() {
   const canvasRef = useRef(null);
@@ -194,47 +195,60 @@ export default function Home() {
       
       const drawingData = tempCanvas.toDataURL("image/png").split(",")[1];
       
-      // Create request payload
-      const requestPayload = {
-        prompt,
-        drawingData,
-        apiKey // Send API key with the request
+      // Initialize the Gemini API client directly in the browser with user's API key
+      const genAI = new GoogleGenerativeAI(apiKey);
+      
+      // Set responseModalities to include "Image" for image generation
+      const model = genAI.getGenerativeModel({
+        model: "gemini-2.0-flash-exp-image-generation",
+        generationConfig: {
+          responseModalities: ['Text', 'Image']
+        },
+      });
+      
+      // Create image part for the request
+      const imagePart = {
+        inlineData: {
+          data: drawingData,
+          mimeType: "image/png"
+        }
       };
       
-      // Log the request payload (without the full image data for brevity)
-      console.log("Request payload:", {
-        ...requestPayload,
-        apiKey: apiKey ? "************" : null, // Don't log the full API key
-        drawingData: drawingData ? `${drawingData.substring(0, 50)}... (truncated)` : null
-      });
+      // Combine drawing with text prompt
+      const generationContent = [
+        imagePart,
+        { text: `${prompt}. Keep the same minimal line doodle style.` || "Add something new to this drawing, in the same style." }
+      ];
       
-      // Send the drawing and prompt to the API
-      const response = await fetch("/api/generate", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(requestPayload),
-      });
+      console.log("Calling Gemini API directly from browser...");
+      const response = await model.generateContent(generationContent);
+      console.log("Gemini API response received");
       
-      const data = await response.json();
+      // Process response parts
+      let imageData = null;
+      let message = '';
       
-      // Log the response (without the full image data for brevity)
-      console.log("Response:", {
-        ...data,
-        imageData: data.imageData ? `${data.imageData.substring(0, 50)}... (truncated)` : null
-      });
+      for (const part of response.response.candidates[0].content.parts) {
+        // Based on the part type, either get the text or image data
+        if (part.text) {
+          message = part.text;
+          console.log("Received text response:", part.text);
+        } else if (part.inlineData) {
+          imageData = part.inlineData.data;
+          console.log("Received image data, length:", imageData.length);
+        }
+      }
       
-      if (data.success && data.imageData) {
-        const imageUrl = `data:image/png;base64,${data.imageData}`;
+      if (imageData) {
+        const imageUrl = `data:image/png;base64,${imageData}`;
         setGeneratedImage(imageUrl);
       } else {
-        console.error("Failed to generate image:", data.error);
+        console.error("No image data in response");
         alert("Failed to generate image. Please try again.");
       }
     } catch (error) {
-      console.error("Error submitting drawing:", error);
-      alert("An error occurred. Please try again.");
+      console.error("Error generating image:", error);
+      alert(`Error: ${error.message || "Failed to generate image. Please check your API key."}`);
     } finally {
       setIsLoading(false);
     }
