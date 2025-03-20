@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { SendHorizontal, LoaderCircle, Trash2 } from "lucide-react";
+import { SendHorizontal, LoaderCircle, Trash2, Key } from "lucide-react";
 import Head from "next/head";
 
 export default function Home() {
@@ -11,6 +11,26 @@ export default function Home() {
   const [prompt, setPrompt] = useState("");
   const [generatedImage, setGeneratedImage] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [apiKey, setApiKey] = useState("");
+  const [showApiKeyModal, setShowApiKeyModal] = useState(false);
+  const [apiKeyError, setApiKeyError] = useState("");
+
+  // Check if API key exists in localStorage when component mounts
+  useEffect(() => {
+    const storedApiKey = localStorage.getItem("geminiApiKey");
+    if (storedApiKey) {
+      setApiKey(storedApiKey);
+    } else {
+      setShowApiKeyModal(true);
+    }
+  }, []);
+
+  // Save API key to localStorage when it changes
+  useEffect(() => {
+    if (apiKey) {
+      localStorage.setItem("geminiApiKey", apiKey);
+    }
+  }, [apiKey]);
 
   // Load background image when generatedImage changes
   useEffect(() => {
@@ -148,6 +168,10 @@ export default function Home() {
     e.preventDefault();
     
     if (!canvasRef.current) return;
+    if (!apiKey) {
+      setShowApiKeyModal(true);
+      return;
+    }
     
     setIsLoading(true);
     
@@ -173,12 +197,14 @@ export default function Home() {
       // Create request payload
       const requestPayload = {
         prompt,
-        drawingData
+        drawingData,
+        apiKey // Send API key with the request
       };
       
       // Log the request payload (without the full image data for brevity)
       console.log("Request payload:", {
         ...requestPayload,
+        apiKey: apiKey ? "************" : null, // Don't log the full API key
         drawingData: drawingData ? `${drawingData.substring(0, 50)}... (truncated)` : null
       });
       
@@ -239,6 +265,19 @@ export default function Home() {
     };
   }, [isDrawing]);
 
+  const handleSaveApiKey = () => {
+    if (!apiKey || apiKey.trim() === "") {
+      setApiKeyError("Please enter a valid API key");
+      return;
+    }
+    setApiKeyError("");
+    setShowApiKeyModal(false);
+  };
+
+  const openApiKeyModal = () => {
+    setShowApiKeyModal(true);
+  };
+
   return (
   <>
   <Head>
@@ -246,6 +285,52 @@ export default function Home() {
     <meta name="description" content="Gemini Co-Drawing" />
     <link rel="icon" href="/favicon.ico" />
   </Head>
+  
+  {/* API Key Modal */}
+  {showApiKeyModal && (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-xl p-5 md:p-8 max-w-md w-full shadow-xl">
+        <h2 className="text-xl font-bold mb-4">Enter your Gemini API Key</h2>
+        <p className="text-gray-600 mb-5">
+          To use Gemini Co-Drawing, you need to provide your Gemini API key.
+          You can get one for free from{" "}
+          <a 
+            href="https://aistudio.google.com/app/apikey" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="text-blue-600 underline"
+          >
+            Google AI Studio
+          </a>.
+        </p>
+        
+        <div className="mb-5">
+          <label htmlFor="apiKey" className="block text-sm font-medium text-gray-700 mb-1">
+            API Key
+          </label>
+          <input
+            type="text"
+            id="apiKey"
+            value={apiKey}
+            onChange={(e) => setApiKey(e.target.value)}
+            placeholder="AIzaSyA..."
+            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          />
+          {apiKeyError && <p className="mt-1 text-sm text-red-600">{apiKeyError}</p>}
+        </div>
+        
+        <div className="flex justify-end">
+          <button
+            onClick={handleSaveApiKey}
+            className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+          >
+            Save and Continue
+          </button>
+        </div>
+      </div>
+    </div>
+  )}
+  
   <div className="min-h-screen notebook-paper-bg text-gray-900 flex flex-col justify-start items-center">     
       
       <main className="container mx-auto px-3 sm:px-6 py-5 sm:py-10 pb-32 max-w-5xl w-full">
@@ -292,9 +377,17 @@ export default function Home() {
             <button
               type="button"
               onClick={clearCanvas}
-              className="w-10 h-10 rounded-full flex items-center justify-center bg-white shadow-sm transition-all hover:bg-gray-50 hover:scale-110"
+              className="w-10 h-10 rounded-full flex items-center justify-center bg-white shadow-sm transition-all hover:bg-gray-50 hover:scale-110 mr-2"
             >
               <Trash2 className="w-5 h-5 text-gray-700" aria-label="Clear Canvas" />
+            </button>
+            <button
+              type="button"
+              onClick={openApiKeyModal}
+              className="w-10 h-10 rounded-full flex items-center justify-center bg-white shadow-sm transition-all hover:bg-gray-50 hover:scale-110"
+              title="Configure API Key"
+            >
+              <Key className="w-5 h-5 text-gray-700" aria-label="API Key Settings" />
             </button>
           </menu>
         </div>

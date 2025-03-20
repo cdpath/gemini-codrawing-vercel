@@ -33,8 +33,9 @@ RUN if [ -f next.config.js ]; then \
     fi
 
 # Set environment variables from app.yaml
-ENV GEMINI_API_KEY="AIzaSyBZqvjHhfLn_XzGYkNCWRA0PNQ6r2CUy_Y"
-ENV GCP_CLIENT_EMAIL="trudyp@google.com"
+# ENV GEMINI_API_KEY="AIzaSyBZqvjHhfLn_XzGYkNCWRA0PNQ6r2CUy_Y"
+# ENV GCP_CLIENT_EMAIL="trudyp@google.com"
+# API keys will be provided by users through the UI
 
 # Build the application
 RUN npm run build
@@ -56,8 +57,8 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
 # Set environment variables from app.yaml
-ENV GEMINI_API_KEY="AIzaSyBZqvjHhfLn_XzGYkNCWRA0PNQ6r2CUy_Y"
-ENV GCP_CLIENT_EMAIL="trudyp@google.com"
+# ENV GEMINI_API_KEY="AIzaSyBZqvjHhfLn_XzGYkNCWRA0PNQ6r2CUy_Y"
+# ENV GCP_CLIENT_EMAIL="trudyp@google.com"
 
 # Switch to non-root user
 USER nextjs

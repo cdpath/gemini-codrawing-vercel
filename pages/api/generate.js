@@ -6,22 +6,28 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  // Get prompt and drawing from request body
-  const { prompt, drawingData } = req.body;
+  // Get prompt, drawing, and API key from request body
+  const { prompt, drawingData, apiKey } = req.body;
   
   // Log request details (truncating drawingData for brevity)
   console.log("API Request:", {
     prompt,
     hasDrawingData: !!drawingData,
     drawingDataLength: drawingData ? drawingData.length : 0,
-    drawingDataSample: drawingData ? `${drawingData.substring(0, 50)}... (truncated)` : null
+    drawingDataSample: drawingData ? `${drawingData.substring(0, 50)}... (truncated)` : null,
+    hasApiKey: !!apiKey
   });
   
   if (!prompt) {
     return res.status(400).json({ error: 'Prompt is required' });
   }
 
-  const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+  if (!apiKey) {
+    return res.status(400).json({ error: 'API key is required' });
+  }
+
+  // Use the API key provided by the client
+  const genAI = new GoogleGenerativeAI(apiKey);
 
   // Set responseModalities to include "Image" so the model can generate an image
   const model = genAI.getGenerativeModel({

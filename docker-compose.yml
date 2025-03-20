@@ -9,8 +9,7 @@ services:
       - "3000:3000"
     environment:
       - NODE_ENV=production
-      - GEMINI_API_KEY=${GEMINI_API_KEY:-AIzaSyBZqvjHhfLn_XzGYkNCWRA0PNQ6r2CUy_Y}
-      - GCP_CLIENT_EMAIL=${GCP_CLIENT_EMAIL:-trudyp@google.com}
+      # API keys will be provided by users through the UI
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "wget", "--spider", "http://localhost:3000"]
