@@ -5,7 +5,6 @@
   "installCommand": "npm install",
   "framework": "nextjs",
   "outputDirectory": ".next",
-  "regions": ["all"],
   "git": {
     "deploymentEnabled": {
       "main": true,
